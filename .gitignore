@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
+server/.env
+server/certs/
+server/deploy-env*.txt
+wechat-test-order-*.png
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts

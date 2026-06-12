@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #f5f7fb;
+  background: #080b12;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: #080b12;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 78% 3%, rgba(45, 127, 170, 0.13), transparent 30rem),
+    radial-gradient(circle at 8% 32%, rgba(100, 216, 255, 0.06), transparent 26rem),
+    #080b12;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  color: #080b12;
+  background: #c8ff62;
+}
+
+.grid-surface {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  opacity: 0.32;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+.noise {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
+}
+
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(145deg, rgba(17, 23, 34, 0.9), rgba(10, 14, 23, 0.74));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(18px);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #9ba8b8;
+  font-size: 0.72rem;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 1.65rem;
+  height: 1px;
+  content: "";
+  background: #64d8ff;
+  box-shadow: 0 0 10px rgba(100, 216, 255, 0.65);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanline::after {
+  position: absolute;
+  inset: -50% 0 auto;
+  height: 38%;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgba(100, 216, 255, 0.045), transparent);
+  animation: scan 8s linear infinite;
+}
+
+.premium-highlight {
+  position: relative;
+  display: inline;
+  color: transparent;
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 0 13px rgba(100, 216, 255, 0.12));
+  animation: highlight-flow 7s ease-in-out infinite;
+}
+
+.premium-highlight::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.22rem;
+  left: 0;
+  height: 1px;
+  content: "";
+  opacity: 0.68;
+  transform-origin: left;
+  background: linear-gradient(90deg, transparent, currentColor 22%, currentColor 78%, transparent);
+}
+
+.premium-highlight-cyan {
+  color: #73defd;
+  background-image: linear-gradient(100deg, #dff9ff 0%, #68d9ff 30%, #a5ffe7 58%, #86a9ff 100%);
+}
+
+.premium-highlight-acid {
+  color: #c8ff62;
+  background-image: linear-gradient(100deg, #f2ffd5 0%, #c8ff62 32%, #66f5c8 65%, #7edcff 100%);
+}
+
+.premium-highlight-violet {
+  color: #ac9cff;
+  background-image: linear-gradient(100deg, #f1ecff 0%, #b6a4ff 30%, #71d8ff 62%, #d08cff 100%);
+}
+
+@keyframes scan {
+  to {
+    transform: translateY(520%);
+  }
+}
+
+@keyframes highlight-flow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

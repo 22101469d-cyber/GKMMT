@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: gaokao-ai-api
+    env: node
+    rootDir: server
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENABLE_DEV_PAYMENT
+        value: false
+      - key: USE_MOCK_DATABASE
+        value: false
+      - key: USE_MOCK_AI
+        value: false
+      - key: AI_PROVIDER
+        value: openrouter
+      - key: REPORT_PRICE_FEN
+        value: 1990
+      - key: WECHAT_PAY_ENABLED
+        value: true
