@@ -1,6 +1,9 @@
 import { Router, type Request } from "express";
 import { asyncRoute } from "../lib/asyncRoute.js";
-import { processWechatNotification } from "../services/paymentService.js";
+import {
+  processAlipayNotification,
+  processWechatNotification,
+} from "../services/paymentService.js";
 
 type RawBodyRequest = Request & { rawBody?: string };
 
@@ -17,5 +20,13 @@ paymentsRoutes.post(
       serial: request.get("wechatpay-serial") ?? "",
     });
     response.json({ code: "SUCCESS", message: "成功" });
+  }),
+);
+
+paymentsRoutes.post(
+  "/alipay/notify",
+  asyncRoute(async (request, response) => {
+    await processAlipayNotification(request.body as Record<string, unknown>);
+    response.type("text/plain").send("success");
   }),
 );

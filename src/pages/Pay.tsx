@@ -4,6 +4,7 @@ import {
   BrainCircuit,
   Check,
   CreditCard,
+  ExternalLink,
   RefreshCw,
   ShieldCheck,
   Smartphone,
@@ -17,6 +18,7 @@ import {
   createOrder,
   generateFullReport,
   getOrderPaymentStatus,
+  initializeAlipayPayment,
   initializeOrderPayment,
   markOrderPaid,
   type PaymentInitialization,
@@ -37,6 +39,7 @@ export default function Pay() {
   } = useProfileStore();
   const [preparing, setPreparing] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [openingAlipay, setOpeningAlipay] = useState(false);
   const [paymentMode, setPaymentMode] = useState<PaymentMode | null>(null);
   const [codeUrl, setCodeUrl] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState("");
@@ -134,7 +137,7 @@ export default function Pay() {
   }, [generating]);
 
   useEffect(() => {
-    if (!orderId || paymentMode !== "wechat_native" || generating) return;
+    if (!orderId || paymentMode === "development" || generating) return;
     const check = async () => {
       try {
         const status = await getOrderPaymentStatus(orderId);
@@ -168,14 +171,36 @@ export default function Pay() {
       if (status.status === "paid") {
         await finishUnlock();
       } else {
-        setError("暂未收到微信支付结果。完成支付后页面会自动更新。");
+        setError("暂未收到支付结果。完成支付后页面会自动更新。");
       }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "支付状态查询失败");
     }
   };
 
+  const openAlipay = async () => {
+    if (!orderId || generating || openingAlipay) return;
+    setOpeningAlipay(true);
+    setError("");
+    try {
+      const payment = await initializeAlipayPayment(orderId);
+      setPaymentMode(payment.paymentMode);
+      if (payment.status === "paid") {
+        await finishUnlock();
+        return;
+      }
+      if (!payment.paymentUrl) {
+        throw new Error("支付宝支付链接创建失败，请稍后重试");
+      }
+      window.location.href = payment.paymentUrl;
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "支付宝支付暂不可用");
+      setOpeningAlipay(false);
+    }
+  };
+
   const isWechat = paymentMode === "wechat_native";
+  const isAlipay = paymentMode === "alipay_wap";
 
   return (
     <section className="mx-auto max-w-5xl px-5 py-10 lg:px-8 lg:py-16">
@@ -210,7 +235,7 @@ export default function Pay() {
           <div className="flex items-center gap-3">
             <CreditCard size={19} className="text-cyan" />
             <h2 className="font-display font-semibold">
-              {isWechat ? "微信扫码支付" : "开发环境支付"}
+              {isAlipay ? "支付宝支付" : isWechat ? "微信扫码支付" : "开发环境支付"}
             </h2>
           </div>
 
@@ -241,7 +266,16 @@ export default function Pay() {
             <div className="mt-5 text-center">
               <div className="text-sm text-slate-300">请使用微信扫描二维码完成支付</div>
               <div className="mt-2 text-[11px] leading-5 text-slate-600">
-                支付成功后自动生成报告，请保持页面打开
+                不建议保存图片后识别；请用微信扫一扫扫描屏幕二维码
+              </div>
+            </div>
+          )}
+
+          {!generating && isAlipay && (
+            <div className="mt-5 text-center">
+              <div className="text-sm text-slate-300">已跳转支付宝收银台</div>
+              <div className="mt-2 text-[11px] leading-5 text-slate-600">
+                支付完成回到本页后，会自动检查并生成报告
               </div>
             </div>
           )}
@@ -268,20 +302,33 @@ export default function Pay() {
           )}
 
           {!generating && (
-            <motion.button
-              type="button"
-              whileHover={!preparing ? { y: -2 } : undefined}
-              whileTap={!preparing ? { scale: 0.99 } : undefined}
-              onClick={isWechat ? checkPaymentNow : developmentUnlock}
-              disabled={preparing || !orderId}
-              className="mt-6 flex h-[52px] w-full items-center justify-center gap-2 bg-acid font-semibold text-ink shadow-acid disabled:cursor-wait disabled:opacity-60"
-            >
-              {preparing
-                ? "正在创建订单…"
-                : isWechat
-                  ? "我已完成支付，立即检查"
-                  : "测试付款并生成报告"}
-            </motion.button>
+            <div className="mt-6 grid gap-3">
+              <motion.button
+                type="button"
+                whileHover={!preparing ? { y: -2 } : undefined}
+                whileTap={!preparing ? { scale: 0.99 } : undefined}
+                onClick={openAlipay}
+                disabled={preparing || !orderId || openingAlipay}
+                className="flex h-[52px] w-full items-center justify-center gap-2 bg-[#1677ff] font-semibold text-white shadow-[0_0_28px_rgba(22,119,255,.22)] disabled:cursor-wait disabled:opacity-60"
+              >
+                <ExternalLink size={16} />
+                {openingAlipay ? "正在打开支付宝…" : "支付宝支付"}
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={!preparing ? { y: -2 } : undefined}
+                whileTap={!preparing ? { scale: 0.99 } : undefined}
+                onClick={isWechat || isAlipay ? checkPaymentNow : developmentUnlock}
+                disabled={preparing || !orderId}
+                className="flex h-[48px] w-full items-center justify-center gap-2 border border-white/10 bg-white/[0.035] text-sm font-medium text-slate-300 transition hover:border-cyan/30 hover:text-white disabled:cursor-wait disabled:opacity-60"
+              >
+                {preparing
+                  ? "正在创建订单…"
+                  : isWechat || isAlipay
+                    ? "我已完成支付，立即检查"
+                    : "测试付款并生成报告"}
+              </motion.button>
+            </div>
           )}
 
           <button
@@ -294,7 +341,7 @@ export default function Pay() {
           </button>
           <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-slate-600">
             <ShieldCheck size={13} />
-            {isWechat ? "支付结果由微信支付回调确认" : "尚未配置微信凭证，当前为本地测试模式"}
+            {isWechat || isAlipay ? "支付结果由支付平台回调确认" : "尚未配置支付凭证，当前为本地测试模式"}
           </div>
         </div>
       </div>

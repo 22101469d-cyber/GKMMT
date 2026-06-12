@@ -87,12 +87,19 @@ export async function createOrder(profileId: string, reportId: string) {
 export type PaymentInitialization = {
   orderId: string;
   status: "pending" | "paid" | "failed" | "refunded";
-  paymentMode: "wechat_native" | "development";
+  paymentMode: "wechat_native" | "alipay_wap" | "development";
   codeUrl: string | null;
+  paymentUrl?: string | null;
 };
 
 export async function initializeOrderPayment(orderId: string) {
   return request<PaymentInitialization>(`/api/orders/${orderId}/payment`, {
+    method: "POST",
+  });
+}
+
+export async function initializeAlipayPayment(orderId: string) {
+  return request<PaymentInitialization>(`/api/orders/${orderId}/alipay`, {
     method: "POST",
   });
 }
@@ -102,7 +109,7 @@ export async function getOrderPaymentStatus(orderId: string) {
     orderId: string;
     reportId: string;
     status: "pending" | "paid" | "failed" | "refunded";
-    paymentMode: "wechat_native" | "development";
+    paymentMode: "wechat_native" | "alipay_wap" | "development";
     paidAt: string | null;
   }>(`/api/orders/${orderId}`);
 }

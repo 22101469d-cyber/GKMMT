@@ -44,12 +44,16 @@ app.use(
     },
   }),
 );
+app.use(express.urlencoded({ extended: false }));
 
 app.get("/health", (_request, response) => {
   response.json({
     status: "ok",
     database: config.USE_MOCK_DATABASE ? "memory" : "supabase",
-    payment: config.WECHAT_PAY_ENABLED ? "wechat_native" : "development",
+    payment: [
+      config.WECHAT_PAY_ENABLED ? "wechat_native" : "development",
+      config.ALIPAY_ENABLED ? "alipay_wap" : null,
+    ].filter(Boolean).join("+"),
     ai:
       config.AI_PROVIDER === "gemini"
         ? config.GEMINI_MODEL

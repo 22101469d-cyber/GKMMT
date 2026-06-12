@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { readFileSync } from "node:fs";
 import { z } from "zod";
 
 const booleanString = z
@@ -24,6 +25,16 @@ const envSchema = z.object({
   WECHAT_PAY_PLATFORM_SERIAL_NO: z.string().optional().default(""),
   WECHAT_PAY_API_V3_KEY: z.string().optional().default(""),
   WECHAT_PAY_NOTIFY_URL: z.string().optional().default(""),
+  ALIPAY_ENABLED: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  ALIPAY_APP_ID: z.string().optional().default(""),
+  ALIPAY_PRIVATE_KEY_PATH: z.string().optional().default(""),
+  ALIPAY_PRIVATE_KEY_PEM: z.string().optional().default(""),
+  ALIPAY_PUBLIC_KEY_PATH: z.string().optional().default(""),
+  ALIPAY_PUBLIC_KEY_PEM: z.string().optional().default(""),
+  ALIPAY_NOTIFY_URL: z.string().optional().default(""),
+  ALIPAY_RETURN_URL: z.string().optional().default(""),
+  ALIPAY_GATEWAY: z.string().url().default("https://openapi.alipay.com/gateway.do"),
+  ALIPAY_KEY_TYPE: z.enum(["PKCS1", "PKCS8"]).default("PKCS8"),
   SUPABASE_URL: z.string().optional().default(""),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional().default(""),
   OPENAI_API_KEY: z.string().optional().default(""),
@@ -41,8 +52,22 @@ const envSchema = z.object({
 
 const parsedConfig = envSchema.parse(process.env);
 
+function readSecretFile(path: string) {
+  return readFileSync(path, "utf8").trim();
+}
+
 export const config = {
   ...parsedConfig,
+  ALIPAY_PRIVATE_KEY:
+    parsedConfig.ALIPAY_PRIVATE_KEY_PEM ||
+    (parsedConfig.ALIPAY_PRIVATE_KEY_PATH
+      ? readSecretFile(parsedConfig.ALIPAY_PRIVATE_KEY_PATH)
+      : ""),
+  ALIPAY_PUBLIC_KEY:
+    parsedConfig.ALIPAY_PUBLIC_KEY_PEM ||
+    (parsedConfig.ALIPAY_PUBLIC_KEY_PATH
+      ? readSecretFile(parsedConfig.ALIPAY_PUBLIC_KEY_PATH)
+      : ""),
   ENABLE_DEV_PAYMENT:
     parsedConfig.ENABLE_DEV_PAYMENT === undefined
       ? parsedConfig.NODE_ENV !== "production"
@@ -83,6 +108,21 @@ if (config.WECHAT_PAY_ENABLED) {
   }
   if (!config.WECHAT_PAY_NOTIFY_URL.startsWith("https://")) {
     throw new Error("WECHAT_PAY_NOTIFY_URL must use HTTPS");
+  }
+}
+
+if (config.ALIPAY_ENABLED) {
+  const missing = [
+    ["ALIPAY_APP_ID", config.ALIPAY_APP_ID],
+    ["ALIPAY_PRIVATE_KEY_PATH or ALIPAY_PRIVATE_KEY_PEM", config.ALIPAY_PRIVATE_KEY],
+    ["ALIPAY_PUBLIC_KEY_PATH or ALIPAY_PUBLIC_KEY_PEM", config.ALIPAY_PUBLIC_KEY],
+    ["ALIPAY_NOTIFY_URL", config.ALIPAY_NOTIFY_URL],
+  ].filter(([, value]) => !value).map(([name]) => name);
+  if (missing.length) {
+    throw new Error(`Missing Alipay configuration: ${missing.join(", ")}`);
+  }
+  if (!config.ALIPAY_NOTIFY_URL.startsWith("https://")) {
+    throw new Error("ALIPAY_NOTIFY_URL must use HTTPS");
   }
 }
 

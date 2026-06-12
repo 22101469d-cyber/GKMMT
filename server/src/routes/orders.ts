@@ -4,6 +4,7 @@ import { createOrderSchema, orderIdParamSchema } from "../schemas/orderSchema.js
 import { createOrder } from "../services/orderService.js";
 import {
   getOrderPaymentStatus,
+  initiateAlipayWapPayment,
   initiateOrderPayment,
 } from "../services/paymentService.js";
 
@@ -30,5 +31,13 @@ ordersRoutes.post(
   asyncRoute(async (request, response) => {
     const { orderId } = orderIdParamSchema.parse(request.params);
     response.json(await initiateOrderPayment(orderId));
+  }),
+);
+
+ordersRoutes.post(
+  "/:orderId/alipay",
+  asyncRoute(async (request, response) => {
+    const { orderId } = orderIdParamSchema.parse(request.params);
+    response.json(await initiateAlipayWapPayment(orderId));
   }),
 );
